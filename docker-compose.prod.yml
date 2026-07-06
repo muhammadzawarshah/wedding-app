@@ -1,0 +1,77 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: wedding
+      POSTGRES_USER: wedding
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - wedding_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wedding -d wedding"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+    networks: [internal]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: postgres://wedding:${POSTGRES_PASSWORD}@db:5432/wedding
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: https://abhiaijawedding.co.uk
+    volumes:
+      - wedding_uploads:/app/uploads
+    networks: [internal, proxy]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=root_default
+      - traefik.http.routers.wedding-api.rule=Host(`abhiaijawedding.co.uk`) && PathPrefix(`/backend-api`)
+      - traefik.http.routers.wedding-api.entrypoints=websecure
+      - traefik.http.routers.wedding-api.tls=true
+      - traefik.http.routers.wedding-api.tls.certresolver=mytlschallenge
+      - traefik.http.routers.wedding-api.priority=100
+      - traefik.http.middlewares.wedding-api-strip.stripprefix.prefixes=/backend-api
+      - traefik.http.routers.wedding-api.middlewares=wedding-api-strip@docker
+      - traefik.http.services.wedding-api.loadbalancer.server.port=4000
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        NEXT_PUBLIC_API_URL: https://abhiaijawedding.co.uk/backend-api/api
+    restart: unless-stopped
+    depends_on: [api]
+    environment:
+      API_INTERNAL_URL: http://api:4000/api
+      NEXT_PUBLIC_API_URL: https://abhiaijawedding.co.uk/backend-api/api
+    networks: [internal, proxy]
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=root_default
+      - traefik.http.routers.wedding-web.rule=Host(`abhiaijawedding.co.uk`)
+      - traefik.http.routers.wedding-web.entrypoints=websecure
+      - traefik.http.routers.wedding-web.tls=true
+      - traefik.http.routers.wedding-web.tls.certresolver=mytlschallenge
+      - traefik.http.routers.wedding-web.priority=10
+      - traefik.http.services.wedding-web.loadbalancer.server.port=3000
+
+networks:
+  internal:
+  proxy:
+    external: true
+    name: root_default
+
+volumes:
+  wedding_db:
+  wedding_uploads:

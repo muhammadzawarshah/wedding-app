@@ -1,0 +1,11 @@
+{
+  "name": "aija-abhi-wedding-platform",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:web": "npm run dev -w @wedding/web",
+    "dev:api": "npm run start:dev -w @wedding/api",
+    "build": "npm run build -w @wedding/api && npm run build -w @wedding/web",
+    "lint": "npm run lint -w @wedding/api && npm run lint -w @wedding/web"
+  }
+}

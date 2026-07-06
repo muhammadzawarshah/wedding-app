@@ -1,0 +1,20 @@
+# MediaMTX configuration for the wedding live stream.
+
+# Serve HLS (what the website hls.js player and the Flutter video_player read).
+hls: yes
+hlsAddress: :8888
+hlsVariant: lowLatency
+hlsAllowOrigin: '*'
+
+# Record every published stream to disk (fragmented MP4) so it can be kept as a
+# recording for guests after the event.
+pathDefaults:
+  record: yes
+  recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S
+  recordFormat: fmp4
+
+# One ready-made path called "live".
+#   Broadcast to:  rtmp://<server>:1935/live
+#   Play (HLS):    http://<server>:8888/live/index.m3u8
+paths:
+  live:

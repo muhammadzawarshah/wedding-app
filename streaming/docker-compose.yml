@@ -1,0 +1,21 @@
+# Self-hosted live streaming for the wedding app.
+#
+# MediaMTX is a single-binary server that accepts an RTMP/SRT broadcast (from
+# OBS or a phone app), republishes it as HLS for the website + Flutter app to
+# play, and records every stream to ./recordings.
+#
+# Start:  cd streaming && docker compose up -d
+# Stop:   docker compose down
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:latest
+    container_name: wedding-stream
+    restart: unless-stopped
+    ports:
+      - "1935:1935"   # RTMP ingest  — broadcaster (OBS/phone) pushes here
+      - "8888:8888"   # HLS playback — website + app play here
+      - "8889:8889"   # WebRTC (optional, lower latency)
+      - "8189:8189/udp"
+    volumes:
+      - ./mediamtx.yml:/mediamtx.yml
+      - ./recordings:/recordings

@@ -1,0 +1,10 @@
+{
+    "dart.projectSearchDepth": 8,
+    "dart.flutterCreatePlatforms": [
+        "android",
+        "ios",
+        "web",
+        "windows"
+    ],
+    "dart.previewFlutterUiGuides": true
+}
